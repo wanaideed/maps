@@ -18,6 +18,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://erasta.github.io/Leaflet.RotatedMarker/leaflet.rotatedMarker.js"></script>
 
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+
     <!-- <script type="module" src="./js/hostility.js"></script> -->
     <!-- <script type="module" src="./js/marker.js"></script> -->
 
@@ -62,6 +64,7 @@
         }).addTo(map);
 
         let layerSites = L.layerGroup();
+        let layerPolyline = L.layerGroup();
         var editableLayers = L.featureGroup().addTo(map);
         var drawControl = new L.Control.Draw(drawSetting(editableLayers));
         map.addControl(drawControl);
@@ -90,41 +93,124 @@
             map.flyTo(L.latLng(coor[0], coor[1]), 8);
         }
 
-        // let sse = new EventSource('https://myhardrockbit.asuscomm.com:5051/esscom-cop-mq/consume?lastData=1');
-        let sse = new EventSource('http://192.168.0.114:8081/sse_event');
-        // let sse = new EventSource('http://192.168.137.76:8081/sse_event');
+        // fd.append("data", JSON.stringify({"id": idMaker, "key": "hostility", "value": value, "sensor": sensorType}));
+        // setInterval(xx, 800)
+
+        // function xx (){
+
         
-        sse.onmessage = function(e){
+        //     const http = new XMLHttpRequest();
+        //     http.onreadystatechange = function() {
+        //         if (this.readyState == 4 && this.status == 200) {
+        //             console.log("############")
+        //             let raw = JSON.parse(this.responseText)
+        //             console.log(raw);
+        //             plot(raw)
+        //         }
+        //     };
+        //     http.open("GET", "data.json");
+        //     http.send();
+        // }
 
-            // console.log("On Message")
+        // let smad = 1
+        let marker;
+        let makerleaflet = [[4.207707,100.593133],[4.208328,100.597943],[4.208080,100.605333],[4.208124,100.613274], [4.194314,100.624864]]
+        let vv = new L.polyline(makerleaflet, {weight: '0', offset:0, repeat:10,pixelSize:0}).addTo(map)
+        var pd = L.polylineDecorator(vv, {
+        patterns: [{
             
-            let raw = JSON.parse(e.data)
-            let sensor = raw['sensor']
-            let track = raw['update_track']
-            // console.log(track, "UPDATE TRACK")
-            update_track(track)
-            
-            // datas = e
-            let ais = sensor['AIS']
-            let ams_tedung = sensor['AMS/Tedung']
-            // bft = datas['BFT']
-            // boat_tracker = datas['Boat Tracker']
-            // imsi = datas['IMSI']
-            // camar = datas['Camar']
-            // individual = datas['Individual/Drone']
-            let kurita = sensor['Kurita']
+            offset: 0,
+            repeat: 10,
+            symbol: L.Symbol.dash({
+                pathOptions: {
+                color: '#f00',
+                weight: 7
+            },
+                pixelSize: 0
+            })
+        }]
+        }).addTo(map);
+        L.marker([4.207707,100.593133]).addTo(map)
 
-            plotKurita(kurita)
-            // plotCamar(camar)
-            // plotIndividual(individual)
-            // plotImsi(imsi)
-            // plotBoat_tracker(boat_tracker)
-            // plotBft(bft)
-            console.log("tedung", ams_tedung)
-            plotAms_tedung(ams_tedung)
-            // console.log("ais", ais)
-            plotAis(ais)
-        };
+        setTimeout(function () {
+            vv.addLatLng(new L.LatLng(4.173927,100.634726))
+            pd.setPaths(vv)
+            console.log("XXXXX")
+        }, 2000)
+        // let poly;
+
+        // console.log(new L.LatLng(3.2222,  100.12222), "()()()()()()()()")
+        // function plot(xx){
+        //     // poly = new L.polyline(makerleaflet).addTo(map);
+        //     for (var i=0, l=xx.length; i < l; i++){
+        //         if (smad == 1){
+        //             // makerleaflet.push(new L.LatLng(xx[i]['lat'], xx[i]['long']))
+               
+        //             marker = L.marker([xx[i]['lat'], xx[i]['long']]).addTo(map);
+        //             poly = new L.polyline(makerleaflet, {
+        //                 stroke: false,
+        //                 color: 'white', 
+        //                 weight: '3', 
+        //                 dashArray: '20, 20', 
+        //                 dashOffset: '20'}).addTo(map)
+        //         }else{
+                    
+                    
+        //             // makerleaflet.push(new L.LatLng(
+        //             //     marker.getLatLng()['lat'],
+        //             //     marker.getLatLng()['lng']
+        //             //     ));
+                    
+        //                 // poly.addLatLng([xx[i]['lat'],  xx[i]['long']])
+                        
+        //             marker.setLatLng(new L.LatLng(xx[i]['lat'],  xx[i]['long']))
+
+        //             // console.log(makerleaflet, "S")
+                    
+
+        //             console.log("8888")
+        //         }
+        //         smad = smad + 1
+                
+        //     }
+            
+        // }
+
+        // // let sse = new EventSource('https://myhardrockbit.asuscomm.com:5051/esscom-cop-mq/consume?lastData=1');
+        // let sse = new EventSource('http://192.168.0.114:8081/sse_event');
+        // // let sse = new EventSource('http://192.168.137.76:8081/sse_event');
+        
+        // sse.onmessage = function(e){
+
+        //     // console.log("On Message")
+            
+        //     let raw = JSON.parse(e.data)
+        //     let sensor = raw['sensor']
+        //     let track = raw['update_track']
+        //     // console.log(track, "UPDATE TRACK")
+        //     update_track(track)
+            
+        //     // datas = e
+        //     let ais = sensor['AIS']
+        //     let ams_tedung = sensor['AMS/Tedung']
+        //     // bft = datas['BFT']
+        //     // boat_tracker = datas['Boat Tracker']
+        //     // imsi = datas['IMSI']
+        //     // camar = datas['Camar']
+        //     // individual = datas['Individual/Drone']
+        //     let kurita = sensor['Kurita']
+
+        //     plotKurita(kurita)
+        //     // plotCamar(camar)
+        //     // plotIndividual(individual)
+        //     // plotImsi(imsi)
+        //     // plotBoat_tracker(boat_tracker)
+        //     // plotBft(bft)
+        //     console.log("tedung", ams_tedung)
+        //     plotAms_tedung(ams_tedung)
+        //     // console.log("ais", ais)
+        //     plotAis(ais)
+        // };
 
         // {id: '525011169', key: 'hostility', value: '1', sensor: 'AIS'
 
@@ -138,8 +224,8 @@
                     lookupAmsTedung[raw['id']].setIcon(icon)
                 }
             }
-
         }
+        
 
         const lookupAis = {}
         function plotAis(params){
@@ -151,7 +237,6 @@
                 let coor = infos['latlong']
                 
                 if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupAis))){        // no id
-                    // console.log("XXX")
                     lookupAis[id] = newPointMarkerAIS([coor[0], coor[1]], infos)
                     layerSites.addLayer(lookupAis[id])
                     layerSites.addTo(map)
@@ -184,6 +269,45 @@
                     layerSites.addTo(map)
 
                 }else{
+
+                    let prevLatLng = lookupAmsTedung[id].getLatLng();
+                    layerPolyline.addLayer()
+                    if(infos['latitude'] != prevLatLng['lat'] && infos['longitude'] != prevLatLng['lng']){
+
+                        if(id+"polyline" in lookupAmsTedung){
+                            //exist track just update
+
+                            lookupAmsTedung[id+"polyline"].addLatLng(new LatLng(infos['latitude'],infos['longitude'] ))
+                            lookupAmsTedung[id+"polyline_deco"].setPaths(lookupAmsTedung[id+"polyline"])
+
+                        }else{
+                        
+                            // -- if new plot track
+                            let polyArray = [];
+                            polyArray.push([prevLatLng['lat'], prevLatLng[lng]])
+                            polyArray.push([infos['latitude'], infos['longitude']])
+
+                            lookupAmsTedung[id+"polyline"] = new L.polyline(polyArray, {weight: '0'})
+                            layerPolyline.addLayer(lookupAmsTedung[id+"polyline"]);
+
+                            lookupAmsTedung[id+"polyline_deco"] = L.polylineDecorator(polyline, {patterns: [{
+                                            offset: 0,
+                                            repeat: 10,
+                                            symbol: L.Symbol.dash({
+                                                pathOptions: {
+                                                color: '#f00',
+                                                weight: 7
+                                            },
+                                                pixelSize: 0
+                                            })
+                                    }]})
+
+                            layerPolyline.addLayer(lookupAmsTedung[id+"polyline_deco"])
+                            layerPolyline.addTo(map)
+                        }
+                    }
+                    lookupAmsTedung[id].setIcon(checkhostilityTEDUNG_AMSandGetMarker(infos['hostility']))
+                    
 
                 //     const LeafIcon = L.Icon.extend({
                 //     options: {
