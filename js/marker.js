@@ -29,53 +29,144 @@ const toMilisecond = () => {
 }
 
 export const newPointMarkerAIS = (coor, infos) => {
+    let boolFlag = false
+    // return L.circle([infos['latitude'], infos['longitu']], {radius: 200})
 
     return L.marker(coor, {
-        rotationAngle: 0,
+        id: infos['id'],
+        rotationAngle: infos['heading'],
         datetimePlot: toMilisecond(),
         icon: checkhostilityAISandGetMarker(infos['hostility']),
         contextmenu: true,
         contextmenuWidth: 200,
         contextmenuItems: [{
-            text: 'Hostility 1', callback:function() {
-                set_hostility(infos['id'], "1", infos['sensor'])
-            }
+            text: 'Friendly', callback:function() {
+                set_hostility(infos['id'], "2", infos['sensor'])
+            },index: 0,
         },{
-            text: 'Hostility 2', callback:function() {
-                set_hostility(infos['id'], "2", infos['sensor']);
-            }
+            text: 'Assumed Friendly', callback:function() {
+                set_hostility(infos['id'], "2", infos['sensor'])
+            },index: 1,
         },{
-            text: 'Hostility 3',  callback:function() {
-                set_hostility(infos['id'], "3", infos['sensor']);
-            }
+            text: 'Neutral', callback:function() {
+                set_hostility(infos['id'], "3", infos['sensor'])
+            },index: 2,
+        },{
+            text: 'Hostile', callback:function() {
+                set_hostility(infos['id'], "4", infos['sensor'])
+            },index: 3,
+        },{
+            text: 'Assumed Enemy', callback:function() {
+                set_hostility(infos['id'], "4", infos['sensor'])
+            },index: 4,
+        },{
+            text: 'Pretender', callback:function() {
+                set_hostility(infos['id'], "5", infos['sensor'])
+            },index: 5,
+        },{
+            text: 'Unknown', callback:function() {
+                set_hostility(infos['id'], "6", infos['sensor']);
+            },index: 6,
+        },{
+            text: 'Null',  callback:function() {
+                set_hostility(infos['id'], "1", infos['sensor']);
+            },index: 7,
+        },{
+            separator: true,
+            index: 8,
+        },{
+            text: 'EOTS Focus',  callback:function() {
+                console.log("Track")
+            },index: 9,
+        },{
+           
+            text: 'Show Trail',  callback:function(e) {
+                boolFlag = !boolFlag
+                showTails(infos['id'], boolFlag)
+            },index: 10,
         }]
     })
     .bindPopup('ID: ' + infos['id'] + " AIS")
 }
 
-export const newPointMarkerAMS_TEDUNG = (lat, long, infos) => {
+export const addlabelMarkerAIS = ( infos) => {
+     return L.tooltip({
+        permanent: true,
+        direction: 'top',
+        className: "label-ais",
+        // offset: L.point({x: 0, y: 0})
+        offset: L.point({x: 1, y: -3})
+    })
+    .setContent(infos['id'])
+    .setLatLng([infos['latitude'], infos['longitude']])
+}
 
+export const newPointMarkerAMS_TEDUNG = (lat, long, infos) => {
+    let boolFlag = false
+    
     return L.marker(new L.LatLng(lat, long), {
-        rotationAngle: 0,
+        rotationAngle: infos['heading'],
         datetimePlot: toMilisecond(),
         icon: checkhostilityTEDUNG_AMSandGetMarker(infos['hostility']),
         contextmenu: true,
         contextmenuWidth: 200,
         contextmenuItems: [{
-            text: 'Hostility 1', callback:function() {
-                set_hostility(infos['id'], "1", infos['sensor'])
+            text: 'Friendly', callback:function() {
+                set_hostility(infos['id'], "2", infos['sensor'])
             }
         },{
-            text: 'Hostility 2', callback:function() {
-                set_hostility(infos['id'], "2", infos['sensor']);
+            text: 'Assumed Friendly', callback:function() {
+                set_hostility(infos['id'], "2", infos['sensor'])
             }
         },{
-            text: 'Hostility 3',  callback:function() {
-                set_hostility(infos['id'], "3", infos['sensor']);
+            text: 'Neutral', callback:function() {
+                set_hostility(infos['id'], "3", infos['sensor'])
+            }
+        },{
+            text: 'Hostile', callback:function() {
+                set_hostility(infos['id'], "4", infos['sensor'])
+            }
+        },{
+            text: 'Assumed Enemy', callback:function() {
+                set_hostility(infos['id'], "4", infos['sensor'])
+            }
+        },{
+            text: 'Pretender', callback:function() {
+                set_hostility(infos['id'], "5", infos['sensor'])
+            }
+        },{
+            text: 'Unknown', callback:function() {
+                set_hostility(infos['id'], "6", infos['sensor']);
+            }
+        },{
+            text: 'Null',  callback:function() {
+                set_hostility(infos['id'], "1", infos['sensor']);
+            }
+        },{
+            separator: true,
+        },{
+            text: 'EOTS Focus',  callback:function() {
+                console.log("Track")
+            }
+        },{
+            text: 'Show Trail',  callback:function(e) {
+                boolFlag = !boolFlag
+                showTailsAMS(infos['id'], boolFlag)
             }
         }]
     })
     .bindPopup('ID: ' + infos['id'] + " TEDUNG")
+}
+
+export const addlabelMarkerTedung = ( infos) => {
+    return L.tooltip({
+       permanent: true,
+       direction: 'top',
+       className: "label-ais",
+       offset: L.point({x: 1, y: -3})
+   })
+   .setContent(infos['id'])
+   .setLatLng([infos['latitude'], infos['longitude']])
 }
 
 export const newPointMarkerKurita = (coor, infos) => {
@@ -112,142 +203,121 @@ export const isMinuteAgo = (dateTimePlot) => {
 }
 
 export const checkhostilityAISandGetMarker = (hostilityValue) => {
-    // const LeafIcon = L.Icon.extend({
-    //     options: {
-    //         shadowUrl: 'leaf-shadow.png',
-    //         iconSize:     [38, 95],
-    //         shadowSize:   [0, 0],
-    //         iconAnchor:   [22, 94],
-    //         shadowAnchor: [4, 62],
-    //         popupAnchor:  [-3, -76]
-    //     }
-    // });
+    //1 - default
+    const LeafIcon = L.Icon.extend({
+        options: {
+            shadowUrl: 'leaf-shadow.png',
+            iconSize:     [18,  18],
+            shadowSize:   [0, 0],
+            iconAnchor:   [9, 16],
+            // iconAnchor:   [22, 94],
+            // shadowAnchor: [4, 62],
+            // popupAnchor:  [-3, -76]
+        }
+    });
 
-    let iconColor;
+    let iconColor ;
     if (hostilityValue == '1'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/AIS/ais_blue.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_black.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '2'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/AIS/ais_green.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_cyan_blue.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '3'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/AIS/ais_red.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_green.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '4'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/AIS/ais_yellow.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_red.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '5'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_pink_grey.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '6'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_orange.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
-    else if(hostilityValue == '7'){
+   else{
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
-            shadowUrl: './dist/leaflet/images/marker-shadow.png'
-        })
-    }else if(hostilityValue == '8'){
-        iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
-            shadowUrl: './dist/leaflet/images/marker-shadow.png'
-        })
-    }else{
-        iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/AIS/ais_blue.png',
+            iconUrl: './dist/leaflet/images/marker/AIS/ais_black.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
-
-
-    //      iconColor = L.icon({
-    //      iconUrl: './dist/leaflet/images/marker-icon-green.png',
-    //      shadowUrl: 'https://leafletjs.com/examples/custom-icons/leaf-shadow.png'
-    //     })
 
     return iconColor;
 }
 
 
 export const checkhostilityTEDUNG_AMSandGetMarker = (hostilityValue) => {
-
+    let LeafIcon = L.Icon.extend({
+        options: {
+            shadowUrl: 'leaf-shadow.png',
+            iconSize:     [25, 30],
+            shadowSize:   [0, 0],
+            iconAnchor:   [12, 16],
+        // shadowAnchor: [4, 62],
+        // popupAnchor:  [-3, -76]
+        }
+    });
     let iconColor;
-    if (hostilityValue == '1'){
+    if (hostilityValue == '1'){  
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_blue.png',
+            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_black.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '2'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_green.png',
+            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_cyan_blue.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '3'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_red.png',
+            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_green.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '4'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_yellow.png',
+            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_red.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '5'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
+            iconUrl:'./dist/leaflet/images/marker/tedung_ais/tedung_pink_grey.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
     else if(hostilityValue == '6'){
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
+            iconUrl:'./dist/leaflet/images/marker/tedung_ais/tedung_orange.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
-    else if(hostilityValue == '7'){
+   else{
         iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
-            shadowUrl: './dist/leaflet/images/marker-shadow.png'
-        })
-    }else if(hostilityValue == '8'){
-        iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
-            shadowUrl: './dist/leaflet/images/marker-shadow.png'
-        })
-    }else{
-        iconColor = new LeafIcon({
-            iconUrl: './dist/leaflet/images/marker-icon-red.png',
+            iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_black.png',
             shadowUrl: './dist/leaflet/images/marker-shadow.png'
         })
     }
-
-
-    //      iconColor = L.icon({
-    //      iconUrl: './dist/leaflet/images/marker-icon-green.png',
-    //      shadowUrl: 'https://leafletjs.com/examples/custom-icons/leaf-shadow.png'
-    //     })
 
     return iconColor;
 }
@@ -518,6 +588,23 @@ export const checkMarkerHostility = (raw) => {
     }else if(raw['sensor'] == 'AMS'){
         return checkhostilityTEDUNG_AMSandGetMarker(raw['value'])
     }
+}
+
+
+export const plotBase = (hostilityValue) => {
+    let LeafIcon = L.Icon.extend({
+        options: {
+            shadowUrl: 'leaf-shadow.png',
+            iconSize:     [25, 25],
+            shadowSize:   [0, 0],
+        }
+    });
+
+     return new LeafIcon({
+            iconUrl: './dist/leaflet/images/base.png',
+            shadowUrl: './dist/leaflet/images/marker-shadow.png'
+        })
+    
 }
 
 

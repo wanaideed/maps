@@ -17,3 +17,9 @@ function toMilisecond() {
     return  Date.now() + ms_per_minute_5
 }
 
+
+
+function hellos(){
+    alert("O1K")
+}
+

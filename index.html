@@ -7,24 +7,30 @@
     <title>MAP 2.0</title>
 
     <link rel="stylesheet" href="./dist/leaflet/leaflet.css" >
-    <link rel="stylesheet" href="https://rawgit.com/aratcliffe/Leaflet.contextmenu/master/dist/leaflet.contextmenu.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
+    <!-- <link rel="stylesheet" href="https://rawgit.com/aratcliffe/Leaflet.contextmenu/master/dist/leaflet.contextmenu.css" /> -->
+    <link rel="stylesheet" href="./css/leaflet.contextmenu.css" >
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/> -->
+    <link rel="stylesheet" href="./css/leaflet.draw.css" >
 
     <script src="./dist/leaflet/leaflet.js"></script>
+    
     <script src="https://rawgit.com/aratcliffe/Leaflet.contextmenu/master/dist/leaflet.contextmenu.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
 
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script> -->
+    
+    <script src="./js/leaflet.polylineDecorator.js"></script>
+    <!-- <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script> -->
     <script src="https://erasta.github.io/Leaflet.RotatedMarker/leaflet.rotatedMarker.js"></script>
 
-    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-textpath@1.2.0/leaflet.textpath.min.js"></script>
 
     <!-- <script type="module" src="./js/hostility.js"></script> -->
     <!-- <script type="module" src="./js/marker.js"></script> -->
 
-    <!-- <script src="./js/flyTo.js" ></script>
-    <script src="./js/contextMenu.js" ></script>
+    <!-- <script src="./js/flyTo.js" ></script> -->
+    <!--<script src="./js/contextMenu.js" ></script>
     <script src="./js/plotMarker.js" ></script> -->
     
     
@@ -42,56 +48,818 @@
 		}
 
         #map { height: 100%; width: 100%; }
-	
+            .leaflet-tooltip.my-labels {
+                background-color: black;
+                color: white;
+                /* border: transparent; */
+                box-shadow: none;
+                padding: 0px 3px 0px 3px;
+                font-size: xx-small;
+            }
+
+            .leaflet-tooltip.label-ais{
+                background-color: black;
+                color: white;
+                /* border: transparent; */
+                box-shadow: none;
+                padding: 0px 3px 0px 3px;
+                font-size: xx-small;
+            }
+
+            /* .leaflet-contextmenu { */
+                /* background-color: black;
+                color: white; */
+                /* border: transparent; */
+                /* box-shadow: none;
+                padding: 0px 3px 0px 3px;
+                font-size: xx-small;       */
+            /* } */
     </style>
 </head>
 
 <body>
     <div id="map" class="leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0"></div>
+    <!-- <div><button onclick="radarLayer()">xxxxx</button><button onclick="aisLayer(false)">vvvvvv</button></div> -->
+    <script>
+        function radarLayer(){radarLayerToggleO()}
+
+        function bearingScaleLayer(){bearingScaleToggleO()}
+
+        function rangeRingLayer(){rangeRingToggleO()}
+
+        function camarLayer(){camarLayerToggleO()}
+
+        function tedungLayer(){tedungLayerToggleO()}
+
+        function aisLayer(){aisLayerToggleO()}
+
+        function kuritaLayer(){kuritaLayerToggleO()}
+
+
+    </script>
 
     <script type="module">
         import { checkhostilityAISandGetMarker, isIDLocateFreeToPlot, newPointMarkerAIS,newPointMarkerAMS_TEDUNG, 
-            isMinuteAgo, checkhostilityTEDUNG_AMSandGetMarker, newPointMarkerKurita, checkhostilityKuritaSandGetMarker,
-            checkMarkerHostility } from './js/marker.js'
+            isMinuteAgo, checkhostilityTEDUNG_AMSandGetMarker, newPointMarkerKurita, checkhostilityKuritaSandGetMarker,plotBase,addlabelMarkerAIS,
+            checkMarkerHostility, addlabelMarkerTedung } from './js/marker.js'
         import { drawSetting }  from './js/draw.js';
         
-        
+      
         // load maps
-        const map = L.map('map',{ zoomControl: false, contextmenu: true, }).setView([3.07987, 101.68146], 8); //set zoom 13
-        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
-
-        let layerSites = L.layerGroup();
-        let layerPolyline = L.layerGroup();
-        var editableLayers = L.featureGroup().addTo(map);
-        var drawControl = new L.Control.Draw(drawSetting(editableLayers));
-        map.addControl(drawControl);
-
-        // Plot latitude and longitude to center maps
-        const search = L.control({position: 'topleft', collapsed: false})
-        search.onAdd = function(map) {
-            var div = L.DomUtil.create('div', 'command');
-            div.innerHTML = "Lat, Long : <input id='latlong'/><button id='search'>Go</button>"
-            return div;
+        var center = [4.234571, 100.611687], radarbeam = {"type":"LineString", "coordinates": [[center[1], center[0]], [center[1], center[0]]]};
+        
+        let radarLayer = L.layerGroup();
+        let bearingScaleLayer = L.layerGroup();
+        let rangeRingLayer = L.layerGroup();
+        let camarLayer = L.layerGroup();
+        let tedungLayer = L.layerGroup();
+        let tedungLayerTracker = L.layerGroup();
+        let tedungLayerLabel = L.layerGroup();
+        let aisLayer = L.layerGroup();
+        let aisLayerMain = L.layerGroup();
+        let aisLayerTracker = L.layerGroup();
+        let kuritaLayer = L.layerGroup();
+        
+        // --------------- Setting Click event from puty python --------
+        
+        let showradarLayer, showbearingScaleLayer, showrangeRingLayer, showcamarLayer, showtedungLayer, showaisLayer, showkuritaLayer = false;
+        function radarLayerToggle(){
+            showradarLayer = !showradarLayer
+            if (showradarLayer){ radarLayer.addTo(map) }else{ map.removeLayer(radarLayer) }
+            
         }
-        search.addTo(map)
 
-        // event draw for created
-        map.on('draw:created', function(e) {
-        var type = e.layerType,
-            layer = e.layer;
-            editableLayers.addLayer(layer);
+        function bearingScaleToggle(){
+            showbearingScaleLayer = !showbearingScaleLayer
+            if (showbearingScaleLayer){ bearingScaleLayer.addTo(map) }else{ map.removeLayer(bearingScaleLayer) }
+            
+        }
+
+        function rangeRingToggle(){
+            showrangeRingLayer = !showrangeRingLayer
+            if (showrangeRingLayer){ rangeRingLayer.addTo(map) }else{ map.removeLayer(rangeRingLayer) }
+            
+        }
+
+        function camarLayerToggle(){
+            showcamarLayer = !showcamarLayer
+            if (showcamarLayer){ camarLayer.addTo(map) }else{ map.removeLayer(camarLayer) }
+            
+        }
+
+        function tedungLayerToggle(){
+            showtedungLayer = !showtedungLayer
+            if (showtedungLayer){ tedungLayer.addTo(map) }else{ map.removeLayer(tedungLayer) }
+            
+        }
+
+        function aisLayerToggle(){
+            showaisLayer = !showaisLayer
+            if (showaisLayer){ 
+                aisLayer.addTo(map) 
+                aisLayerMain.addTo(map)
+                aisLayerTracker.addTo(map)
+            }else{ 
+                map.removeLayer(aisLayer) 
+                map.removeLayer(aisLayerMain)
+                map.removeLayer(aisLayerTracker)
+            }
+            
+        }
+
+        function kuritaLayerToggle(){
+            showkuritaLayer = !showkuritaLayer
+            if (showkuritaLayer){ kuritaLayer.addTo(map) }else{ map.removeLayer(kuritaLayer) }
+            
+        }
+
+        window.radarLayerToggleO = radarLayerToggle
+        window.bearingScaleToggleO = bearingScaleToggle
+        window.rangeRingToggleO = rangeRingToggle
+        window.camarLayerToggleO = camarLayerToggle
+        window.tedungLayerToggleO = tedungLayerToggle
+        window.aisLayerToggleO = aisLayerToggle
+        window.kuritaLayerToggleO = kuritaLayerToggle
+        window.showTails = function (id, flagBool){
+            console.log(flagBool)
+            if(flagBool){
+                console.log(lookupAis[id+"array"], "Value Array")
+                lookupAis[id+"polyline"] = new L.polyline(lookupAis[id+'array'], {weight: '0.75'})
+                lookupAis[id+"polyline_deco"] = L.polylineDecorator(lookupAis[id+"polyline"], {patterns: [{
+                        offset: 0,
+                        repeat: 10,
+                        symbol: L.Symbol.dash({
+                            pathOptions: {
+                            color: '#000000',
+                            weight: 4
+                        },
+                            pixelSize: 0
+                        })
+                }]})
+                lookupAis[id+"polyline"].addTo(aisLayerTracker)
+                lookupAis[id+"polyline_deco"].addTo(aisLayerTracker)
+                aisLayerTracker.addTo(map)
+            }else{
+                aisLayerTracker.removeLayer(aisLayerTracker[id+"polyline"])
+                aisLayerTracker.removeLayer(aisLayerTracker[id+"polyline_deco"])
+                delete lookupAis[id+"polyline"]
+                delete lookupAis[id+"polyline_deco"]
+                console.log(lookupAis[id+"polyline"], "OOOOOO")
+            }
+        }
+
+        window.showTailsAMS = function (id, flagBool){
+            console.log(flagBool, "AMS")
+            if(flagBool){
+                console.log(lookupAmsTedung[id+"array"], "Value Array")
+                lookupAmsTedung[id+"polyline"] = new L.polyline(lookupAmsTedung[id+'array'], {weight: '0.75'})
+                lookupAmsTedung[id+"polyline_deco"] = L.polylineDecorator(lookupAmsTedung[id+"polyline"], {patterns: [{
+                        offset: 0,
+                        repeat: 10,
+                        symbol: L.Symbol.dash({
+                            pathOptions: {
+                            color: '#000000',
+                            weight: 4
+                        },
+                            pixelSize: 0
+                        })
+                }]})
+                lookupAmsTedung[id+"polyline"].addTo(tedungLayerTracker)
+                lookupAmsTedung[id+"polyline_deco"].addTo(tedungLayerTracker)
+                tedungLayerTracker.addTo(map)
+                // tedungLayerTracker.addTo(map)
+            }else{
+                tedungLayerTracker.removeLayer(lookupAmsTedung[id+"polyline"])
+                tedungLayerTracker.removeLayer(lookupAmsTedung[id+"polyline_deco"])
+                delete lookupAmsTedung[id+"polyline"]
+                delete lookupAmsTedung[id+"polyline_deco"]
+                console.log(lookupAmsTedung[id+"polyline"], "OOOOOO")
+            }
+        }
+
+
+        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        })
+
+        const mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
+        const serverIP = "http://192.168.5.192:8081/"
+        const satelit = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr})
+        const empty = L.tileLayer();
+        const map = L.map('map',
+            { 
+                zoomControl: true, 
+                contextmenu: true, 
+                scrollWheelZoom: false, 
+                dragging: false,
+                maxZoom: 18,minZoom:7, //11
+                layers: [tiles, camarLayer]
+            }).setView([4.2345254, 100.611677], 12); 
+        
+        const baseLayers = {
+            'OpenStreetMap': tiles,
+            'Satellite': satelit,
+            'Empty Maps': empty
+        };
+
+        const overlays = {
+            'Range Ring': rangeRingLayer,
+            'Bearing Scale': bearingScaleLayer,
+            'Scannig': radarLayer,
+            'Ais Data': aisLayerMain,
+            'Ais Label': aisLayer,
+            'Camar': camarLayer,
+            'AMS/Tedung': tedungLayer,
+            'AMS Label': tedungLayerLabel,
+            'Kurita': kuritaLayer,
+        };
+
+        L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map)
+
+        // -----------  Bearing Scale Layer ----------------
+        let angleTick = [];
+        var xy1 = map.options.crs.project(L.latLng(center));
+        
+        [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,190,200, 210, 220, 230, 240,250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360].forEach(function(angle) {
+                let ply;
+                if(angle == 90 || angle == 360 || angle==180 || angle==270 ){
+                    ply = L.polyline([
+                        
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * 15000,
+                            xy1.y + Math.cos(angle * Math.PI / 180) * 15000
+                        ])),
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * (0),
+                            xy1.y + Math.cos(angle * Math.PI / 180) * (0)
+                        ]))
+                    ],
+                        {weight: 2, color: '#808080'}
+                    ).setText(angle.toString(), { orientation: 'perpendicular', attributes: { 'font-size':'1.3em'}}).addTo(bearingScaleLayer)
+                }else{
+                    ply = L.polyline([
+                        
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * 15000,
+                            xy1.y + Math.cos(angle * Math.PI / 180) * 15000
+                        ])),
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * (15000 - (15000 / 11)),
+                            xy1.y + Math.cos(angle * Math.PI / 180) *  (15000 - (15000 / 11)),
+                        ]))
+                    ],
+                        {weight: 1, color: '#808080'}
+                    ).setText(angle.toString(), { orientation: 'perpendicular',attributes: { 'font-size':'1.3em'}}).addTo(bearingScaleLayer)
+                }
+                angleTick.push(ply);
+            });
+        let circleBearing = L.circle(center, {radius: 15000,fill: false,weight: 2,color: '#808080'}).addTo(bearingScaleLayer)
+        var myZoom = {
+        start:  map.getZoom(),
+        end: map.getZoom()
+        };
+        
+        map.on('zoomstart', function(e) {
+            myZoom.start = map.getZoom();
         });
 
-        // add the event handler button Go
-        document.getElementById("search").addEventListener ("click", handlePointLatLong, false);
-        function handlePointLatLong() {
-            latlong = document.getElementById("latlong").value;
-            coor = splitKoma(latlong);
-            map.flyTo(L.latLng(coor[0], coor[1]), 8);
+        map.on('zoomend', function(e) {
+            angleTick.forEach(function(e){bearingScaleLayer.removeLayer(e)})
+
+            myZoom.end = map.getZoom();
+            var diff = myZoom.start - myZoom.end;
+            let newRadius;
+            if (diff > 0) {
+                newRadius = circleBearing.getRadius() * 2
+            } else if (diff < 0) {
+                newRadius = circleBearing.getRadius() / 2
+            }
+
+            circleBearing.setRadius(newRadius);
+            [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,190,200, 210, 220, 230, 240,250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360].forEach(function(angle) {
+                let ply;
+                if(angle == 90 || angle == 360 || angle==180 || angle==270 ){
+                    ply = L.polyline([
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * newRadius,
+                            xy1.y + Math.cos(angle * Math.PI / 180) * newRadius
+                        ])),
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * (0),
+                            xy1.y + Math.cos(angle * Math.PI / 180) * (0),
+                        ]))
+                    ],
+                        {weight: 1, color: '#808080'}
+                    ).setText(angle.toString(), { orientation: 'perpendicular',attributes: { 'font-size':'1.3em'}}).addTo(bearingScaleLayer)
+                }else{
+                    ply = L.polyline([
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * newRadius,
+                            xy1.y + Math.cos(angle * Math.PI / 180) * newRadius
+                        ])),
+                        map.options.crs.unproject(L.point([
+                            xy1.x + Math.sin(angle * Math.PI / 180) * (newRadius - (newRadius / 11)),
+                            xy1.y + Math.cos(angle * Math.PI / 180) * (newRadius - (newRadius / 11))
+                        ]))
+                    ],
+                        {weight: 1, color: '#808080'}
+                    ).setText(angle.toString(), { orientation: 'perpendicular',attributes: { 'font-size':'1.3em'}}).addTo(bearingScaleLayer)
+                }
+                    angleTick.push(ply);
+                });
+        });
+
+
+        // ----------- Range Ring Layer -------------------
+        let i = 2;
+        var rangeRing = [];
+            [3704, 7408, 11112, 14816, 18520, 22224,25928, 29632, 33336, 37040].forEach(function(r) {
+                // rings.push(
+                    L.circle(
+                        center, {
+                            radius: r,
+                            fill: false,
+                            weight: 1.5,
+                            color: '#808080'
+                        }
+                    ).addTo(rangeRingLayer)
+                    let point  = L.point(xy1).add([0, r])
+                    L.tooltip({
+                        permanent: true,
+                        direction: 'center',
+                        className: "my-labels"
+                    })
+                    .setContent(i + "nm")
+                    .setLatLng(map.options.crs.unproject(point))
+                    .addTo(rangeRingLayer)
+
+                    i = i + 2
+            });
+            // rangeRingLayer.addTo(map)
+
+
+        // ------------ Radar rotation layer --------------
+        let xyRadar = map.options.crs.project(L.latLng(center));
+        var rings = [];
+            [3704].forEach(function(r) {
+                rings.push(
+                    L.circle(
+                        center, {
+                            radius: r,
+                            fill: false,
+                            weight: r % 1000 == 0 ? 1.75 : 0.75,
+                            color: '#808080'
+                        }
+                    ).addTo(radarLayer)
+                );
+            });
+
+
+        var xy1 = map.options.crs.project(L.latLng(center)),
+            radius = 3704;
+        var right = L.point(xy1).add([radius, 0]),
+            left = L.point(xy1).subtract([radius, 0]),
+            tops = L.point(xy1).add([0, radius]),
+            bottom = L.point(xy1).subtract([0, radius]);
+
+        // console.log(right, "right")
+        // console.log(map.options.crs.unproject(right))
+        // console.log(map.options.crs.unproject(left))
+        
+
+        var crosshairs = [
+            L.polyline([map.options.crs.unproject(left), map.options.crs.unproject(right)], {weight: 1.5, color: '#808080'}).addTo(radarLayer),
+            L.polyline([map.options.crs.unproject(tops), map.options.crs.unproject(bottom)], {weight: 1.5, color: '#808080'}).addTo(radarLayer),
+        ];
+
+        var radar = L.geoJSON(
+                radarbeam, {
+                onEachFeature : function(feature, layer) {
+                    var arclength = 2;
+                    var sumangle = 360;
+
+                    // sector is the slice of circle we'll use as a "beam shadow"
+                    // aswell use it to test point-in-polygon for aircraft icon fade-out
+                    var sector = {
+                        type:"Polygon",
+                        coordinates: [ [
+                            feature.coordinates[0], feature.coordinates[1],
+                            feature.coordinates[1], feature.coordinates[0]]]
+                    };
+
+                    var beamshadow = L.geoJSON(
+                        sector, {
+                        style: function(feature){
+                            return {
+                                opacity:0.75,
+                                color: '#109856',
+                                weight:0.2,
+                                className:'radar-hand'
+                            }
+                        }
+                    }).addTo(radarLayer)
+
+                    setInterval(function(){
+                        // animate "radar beam"
+                        if (sumangle >= 360) {
+                            sumangle = 0;
+                        } else {
+                            sumangle += arclength;
+                        }
+                        var beamlatlngs = layer.getLatLngs(),
+                            beamshadowlatlngs = beamshadow.getLayers()[0].getLatLngs();
+
+                        // calculate a new location for the beam linestring.
+
+                        beamlatlngs[1] = map.options.crs.unproject(
+                            L.point([
+                                xy1.x + Math.sin(sumangle * Math.PI / 180) * radius,
+                                xy1.y + Math.cos(sumangle * Math.PI / 180) * radius
+                            ])
+                        );
+
+                        // and a new location for the trailing corner of the beam shadow
+
+                        beamshadowlatlngs[0][1] = map.options.crs.unproject(
+                            L.point([
+                                xy1.x + Math.sin((sumangle - 5 * arclength) * Math.PI / 180) * radius,
+                                xy1.y + Math.cos((sumangle - 5 * arclength) * Math.PI / 180) * radius
+                            ])
+                        );
+
+                        var next = [beamshadowlatlngs[0][0], beamlatlngs[1], beamshadowlatlngs[0][1], beamshadowlatlngs[0][0]];
+                        beamshadow.getLayers()[0].setLatLngs(next);
+                        layer.setLatLngs(beamlatlngs).bringToFront();
+
+                    }, 10);
+                },
+                style: function(feature) {
+                    return {color: '#109856', weight: 3, opacity:0.5}
+                }
+            }).addTo(radarLayer)
+
+            // radarLayer.addTo(map)
+
+        // ---------- Sensor / Ship plot -------------------
+        L.marker(center, {
+            icon: plotBase()
+        }).addTo(map);
+
+        
+        // --------- Get SSE and Multi function plot --------
+        let sse = new EventSource(serverIP + "sse_event");
+        
+        sse.onmessage = function(e){
+            let raw = JSON.parse(e.data)
+            let sensor = raw['sensor']
+            let track = raw['update_track']
+            update_track(track)
+
+            let ais = sensor['AIS']
+            let ams_tedung = sensor['AMS/Tedung']
+            let camar = sensor['Camar']
+            let kurita = sensor['Kurita']
+
+            // console.log(">>>>>> AIS ", ais.length)
+            // console.log(">>>>>> Tedung ", ams_tedung.length)
+            // console.log(">>>>>> Camar ", camar.length)
+
+            plotKurita(kurita)
+            plotCamar(camar)
+            plotAms_tedung(ams_tedung)
+            plotAis(ais)
+        };
+
+
+        function removeMarker(params, lookUp){
+            for (var i=0, l=params.length; i < l; i++){
+                if (isMinuteAgo(lookUp[params[i]]['options']['datetimePlot'])){
+                    map.removeLayer(lookUp[params[i]])
+                }
+            }
         }
+
+        function update_track(list_track) {
+            for (var i=0, l=list_track.length; i < l; i++){
+                let raw = list_track[i];
+                let icon = checkMarkerHostility(raw)
+                if (raw['sensor'] == 'AIS'){
+                    lookupAis[raw['id']].setIcon(icon)
+                }else if(raw['sensor'] == 'AMS'){
+                    lookupAmsTedung[raw['id']].setIcon(icon)
+                }
+            }
+        }
+        
+        // ---------- Function AIS plot ------------------
+        const lookupAis = {}
+        function plotAis(params){
+            let removeIDs = Object.keys(lookupAis);
+
+            for (var i=0, l=params.length; i < l; i++){
+                let infos = params[i];
+                let id = infos['id']
+                let coor = infos['latlong']
+                
+                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupAis))){        // no id
+                    lookupAis[id] = newPointMarkerAIS([infos['latitude'],infos['longitude']], infos)
+                    lookupAis[id+"label"] = addlabelMarkerAIS(infos)
+
+                    let polyArray = [];
+                    polyArray.push([infos['latitude'],infos['longitude']])
+                    lookupAis[id+'array'] = polyArray
+
+                    aisLayer.addLayer(lookupAis[id+"label"])
+                    aisLayerMain.addLayer(lookupAis[id])
+                  
+
+                }else{
+                    let prevLatLng = lookupAis[id].getLatLng();
+                    let prev = new L.LatLng(prevLatLng['lat'], prevLatLng['lng'])
+                    let current = new L.LatLng(infos['latitude'], infos['longitude'])
+
+                    if(!prev.equals(current)){
+                        let all = lookupAis[id+'array']
+                        all.push([infos['latitude'],infos['longitude']])
+                        lookupAis[id+'array'] = all
+
+                        if (lookupAis[id+"polyline"] !== undefined){
+                            lookupAis[id+"polyline"].addLatLng(new L.LatLng(infos['latitude'],infos['longitude'] ))
+                            lookupAis[id+"polyline_deco"].setPaths( lookupAis[id+"polyline"] )
+                        }
+                       
+                        lookupAis[id].setRotationAngle(infos['heading'])
+                        lookupAis[id].setLatLng(new L.LatLng(infos['latitude'], infos['longitude'])); 
+                        lookupAis[id+"label"].setLatLng(new L.LatLng(infos['latitude'], infos['longitude']))
+                       
+                    }
+                    lookupAis[id].setIcon(checkhostilityAISandGetMarker(infos['hostility']))
+                }
+            }
+            // removeMarker(removeIDs, lookupAis); 
+        }
+        aisLayer.addTo(map)
+        aisLayerMain.addTo(map)
+
+
+        // ------------- Function Tedung / AMS plot ----------
+        const lookupAmsTedung = {}
+        function plotAms_tedung(params){
+            let removeIDs = Object.keys(lookupAmsTedung);
+            for (var i=0, l=params.length; i < l; i++){
+                let infos = params[i];
+                let id = infos['id']
+                let coor = infos['latlong']
+                
+                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupAmsTedung))){        // no id
+                    lookupAmsTedung[id] = newPointMarkerAMS_TEDUNG(infos['latitude'],infos['longitude'], infos)
+                    lookupAmsTedung[id+"label"] = addlabelMarkerTedung(infos)
+
+                    let polyArray = [];
+                    polyArray.push([infos['latitude'],infos['longitude']])
+                    lookupAmsTedung[id+'array'] = polyArray
+
+                    // let polyArray = [];
+                    // polyArray.push([infos['latitude'],infos['longitude']])
+
+                    
+                    // lookupAmsTedung[id+"polyline"] = new L.polyline(polyArray, {weight: '0'})
+                    // lookupAmsTedung[id+"polyline_deco"] = L.polylineDecorator(lookupAmsTedung[id+"polyline"], {patterns: [{
+                    //         offset: 0,
+                    //         repeat: 10,
+                    //         symbol: L.Symbol.dash({
+                    //             pathOptions: {
+                    //             color: '#000000',
+                    //             weight: 4
+                    //         },
+                    //             pixelSize: 0
+                    //         })
+                    // }]})
+
+                    tedungLayer.addLayer(lookupAmsTedung[id])
+                    // tedungLayer.addLayer(lookupAmsTedung[id+"polyline"]);
+                    // tedungLayer.addLayer(lookupAmsTedung[id+"polyline_deco"])
+                    tedungLayerLabel.addLayer(lookupAmsTedung[id+"label"])
+                    
+
+                }else{
+
+                    let prevLatLng = lookupAmsTedung[id].getLatLng();
+                    let prev = new L.LatLng(prevLatLng['lat'], prevLatLng['lng'])
+                    let current = new L.LatLng(infos['latitude'], infos['longitude'])
+
+                    if(!prev.equals(current)){
+                        let all = lookupAmsTedung[id+'array']
+                        all.push([infos['latitude'],infos['longitude']])
+                        lookupAmsTedung[id+'array'] = all
+
+                        if (lookupAmsTedung[id+"polyline"] !== undefined){
+                            lookupAmsTedung[id+"polyline"].addLatLng(new L.LatLng(infos['latitude'],infos['longitude'] ))
+                            lookupAmsTedung[id+"polyline_deco"].setPaths( lookupAmsTedung[id+"polyline"] )
+                        }
+                    // if(infos['latitude'] != prevLatLng['lat'] && infos['longitude'] != prevLatLng['lng']){
+                        // lookupAmsTedung[id+"polyline"].addLatLng(new L.LatLng(infos['latitude'],infos['longitude'] ))
+                        // lookupAmsTedung[id+"polyline_deco"].setPaths( lookupAmsTedung[id+"polyline"] )
+                        lookupAmsTedung[id].setRotationAngle(infos['heading'])
+                        lookupAmsTedung[id].setLatLng(new L.LatLng(infos['latitude'], infos['longitude'])); 
+                        lookupAmsTedung[id+"label"].setLatLng(new L.LatLng(infos['latitude'], infos['longitude']))
+                    }
+                    
+                    lookupAmsTedung[id].setIcon(checkhostilityTEDUNG_AMSandGetMarker(infos['hostility']))
+                }
+            }
+            // removeMarker(removeIDs, lookupAmsTedung); 
+        }
+        tedungLayer.addTo(map)
+        tedungLayerLabel.addTo(map)
+
+        //-------------- Function Kurita plot ------------
+        const lookupKurita = {}
+        function plotKurita(params){
+            let removeIDs = Object.keys(lookupKurita);
+
+            for (var i=0, l=params.length; i < l; i++){
+                let infos = params[i];
+                let id = infos['id']
+                let coor = infos['latlong']
+                
+                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupKurita))){        // no id
+                    lookupKurita[id] = newPointMarkerKurita([coor[0], coor[1]], infos)
+                    layerSites.addLayer(lookupKurita[id])
+                    layerSites.addTo(map)
+
+                }else{
+
+                    let newLatLng = new L.LatLng(coor[1], coor[0]);
+                    lookupKurita[id].setLatLng(newLatLng); 
+                    lookupKurita[id].setIcon(checkhostilityKuritaSandGetMarker(infos['hostility']))
+                }
+            }
+            removeMarker(removeIDs, lookupKurita); 
+        }
+
+       //--------------- Function Camar plot -------------
+
+       let lookupCamar = {}
+        let contextMane = [{
+                text: 'Hostility 1', callback: clickContext
+            }]
+        function plotCamar(params){
+            let removeIDs = Object.keys(lookupCamar);
+            camarLayer.clearLayers()
+            
+            for (var i=0, l=params.length; i < l; i++){
+                // if (smaad == 1){
+                    let infos = params[i];
+                let id = infos['id']
+                let coor = infos['latlong']
+
+                // let camar = newPointMarkerAIS([infos['latitude'], infos['longitude']], infos)
+                let camar = L.circle([infos['latitude'], infos['longitude']], {
+                    color: '#2b18d6',
+                    fill: true,
+                    fillColor:'#2b18d6',
+                    fillOpacity: 1,
+                    radius: 25,  
+                    contextmenu: true,
+                    contextmenuWidth: 200,
+                    contextmenuItems: contextMane }).bindPopup('ID: ' + infos['id'] + " CAMAR")
+                    camarLayer.addLayer(camar)
+
+            }
+            
+            removeMarker(removeIDs, lookupCamar); 
+        }
+        // camarLayer.addTo(map)
+
+        function clickContext() {
+            console.log("Click")
+        }
+        
+        //         let aisss = [{
+        // "id" :"123123",
+        // "heading": "80",
+        // "sensor": "AIS",
+        // "hostility": "1",
+        // "latitude": 4.242471,
+        // "longitude": 100.553965,
+        //     "latlong": [4.242471,100.553965]
+        
+        // }]
+        // plotAis(aisss)
+
+        // let aissssss = [{
+        // "id" :"902932",
+        // "heading": "90",
+        // "sensor": "AIS",
+        // "hostility": "1",
+        // "latitude": 4.250738,
+        // "longitude": 100.600174,
+        //     "latlong": [4.250738,100.600174]
+        
+        // }]
+        // plotAms_tedung(aissssss)
+
+        
+        // console.log(smaad1._getLngRadius(), "()()()")
+        // .bindTooltip('<label>xx</label>', {permanent: true, opacity: 0.7,}).openTooltip()
+        
+//         L.circle(center,{
+//     color: 'red',
+//     fillColor: '#f03',
+//     fillOpacity: 0.5,
+//     radius: 1000
+// }).addTo(map).bindTooltip('<label>xx</label>', {permanent: true, opacity: 0.7,}).openTooltip()
+
+// let LeafIcon = L.Icon.extend({
+//         options: {
+//             shadowUrl: 'leaf-shadow.png',
+//             iconSize:     [18,  18],
+//             shadowSize:   [0, 0],
+//             // iconAnchor:   [2, 0],
+//         // shadowAnchor: [4, 62],
+//         // popupAnchor:  [-3, -76]
+//         }
+//     });
+
+//         let iconColor = new LeafIcon({
+//             iconUrl: './dist/leaflet/images/marker/AIS/ais_black.png',
+//             shadowUrl: './dist/leaflet/images/marker-shadow.png'
+//         })
+
+
+//     L.marker(new L.LatLng(4.145207,100.569577), {
+//         // rotationAngle: 270,
+//         // datetimePlot: toMilisecond(),
+//         icon: iconColor
+//     }).addTo(map)
+//     L.marker([4.145207,100.569577], {
+//                 // rotationAngle: 90,
+//                 // draggable: true
+//             }).addTo(map);
+
+        // const layerControl = L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map);
+
+
+        // let layerSites = L.layerGroup();
+        // let layerPolyline = L.layerGroup();
+        // var editableLayers = L.featureGroup().addTo(map);
+        // var drawControl = new L.Control.Draw(drawSetting(editableLayers));
+        // map.addControl(drawControl);
+
+        // Plot latitude and longitude to center maps
+        // const search = L.control({position: 'topleft', collapsed: false})
+        // search.onAdd = function(map) {
+        //     var div = L.DomUtil.create('div', 'command');
+        //     div.innerHTML = "Lat, Long : <input id='latlongValue'/><button id='search'>Go</button>"
+        //     return div;
+        // }
+        // search.addTo(map)
+
+        // event draw for created
+        // map.on('draw:created', function(e) {
+        // var type = e.layerType,
+        //     layer = e.layer;
+        //     editableLayers.addLayer(layer);
+        // });
+
+        // add the event handler button Go
+        // document.getElementById("search").addEventListener ("click", handlePointLatLong, false);
+        // function handlePointLatLong() {
+        //     latlong = document.getElementById("latlongValue").value;
+        //     coor = splitKoma(latlong);
+        //     map.flyTo(L.latLng(coor[0], coor[1]), 8);
+        // }
+
+        //---- radar circle draw
+        // Add polar craticule
+
+
+    //         let LeafIcon = L.Icon.extend({
+    //             options: {
+    //                 shadowUrl: 'leaf-shadow.png',
+    //                 iconSize:     [25, 30],
+    //                 shadowSize:   [0, 0],
+    //             //     iconAnchor:   [0, 0],
+    //             //     shadowAnchor: [0, 0],
+    //             //     popupAnchor:  [0, 0]
+    //             }
+    //         });
+
+    // let iconColor = new LeafIcon({
+    //     iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_black.png',
+    //     shadowUrl: './dist/leaflet/images/marker-shadow.png'
+    // })
+
+    // L.marker(new L.LatLng(4.234571, 100.611687), {
+    //     rotationAngle: 270,
+    //     // datetimePlot: toMilisecond(),
+    //     icon: iconColor
+    // }).addTo(map)
+    // L.marker([4.234571, 100.611687], {
+    //             rotationAngle: 90,
+    //             // draggable: true
+    //         }).addTo(map);
 
         // fd.append("data", JSON.stringify({"id": idMaker, "key": "hostility", "value": value, "sensor": sensorType}));
         // setInterval(xx, 800)
@@ -113,30 +881,30 @@
         // }
 
         // let smad = 1
-        let marker;
-        let makerleaflet = [[4.207707,100.593133],[4.208328,100.597943],[4.208080,100.605333],[4.208124,100.613274], [4.194314,100.624864]]
-        let vv = new L.polyline(makerleaflet, {weight: '0', offset:0, repeat:10,pixelSize:0}).addTo(map)
-        var pd = L.polylineDecorator(vv, {
-        patterns: [{
+        // let marker;
+        // let makerleaflet = [[4.207707,100.593133],[4.208328,100.597943],[4.208080,100.605333],[4.208124,100.613274], [4.194314,100.624864]]
+        // let vv = new L.polyline(makerleaflet, {weight: '0', offset:0, repeat:10,pixelSize:0}).addTo(map)
+        // var pd = L.polylineDecorator(vv, {
+        // patterns: [{
             
-            offset: 0,
-            repeat: 10,
-            symbol: L.Symbol.dash({
-                pathOptions: {
-                color: '#f00',
-                weight: 7
-            },
-                pixelSize: 0
-            })
-        }]
-        }).addTo(map);
-        L.marker([4.207707,100.593133]).addTo(map)
+        //     offset: 0,
+        //     repeat: 10,
+        //     symbol: L.Symbol.dash({
+        //         pathOptions: {
+        //         color: '#f00',
+        //         weight: 7
+        //     },
+        //         pixelSize: 0
+        //     })
+        // }]
+        // }).addTo(map);
+        // L.marker([4.207707,100.593133]).addTo(map)
 
-        setTimeout(function () {
-            vv.addLatLng(new L.LatLng(4.173927,100.634726))
-            pd.setPaths(vv)
-            console.log("XXXXX")
-        }, 2000)
+        // setTimeout(function () {
+        //     vv.addLatLng(new L.LatLng(4.173927,100.634726))
+        //     pd.setPaths(vv)
+        //     console.log("XXXXX")
+        // }, 2000)
         // let poly;
 
         // console.log(new L.LatLng(3.2222,  100.12222), "()()()()()()()()")
@@ -177,7 +945,7 @@
         // }
 
         // // let sse = new EventSource('https://myhardrockbit.asuscomm.com:5051/esscom-cop-mq/consume?lastData=1');
-        // let sse = new EventSource('http://192.168.0.114:8081/sse_event');
+        // let sse = new EventSource('http://192.168.0.108:8081/sse_event');
         // // let sse = new EventSource('http://192.168.137.76:8081/sse_event');
         
         // sse.onmessage = function(e){
@@ -187,199 +955,45 @@
         //     let raw = JSON.parse(e.data)
         //     let sensor = raw['sensor']
         //     let track = raw['update_track']
-        //     // console.log(track, "UPDATE TRACK")
+        //     console.log(track, "UPDATE TRACK")
         //     update_track(track)
             
         //     // datas = e
-        //     let ais = sensor['AIS']
+        //     // let ais = sensor['AIS']
         //     let ams_tedung = sensor['AMS/Tedung']
         //     // bft = datas['BFT']
         //     // boat_tracker = datas['Boat Tracker']
         //     // imsi = datas['IMSI']
-        //     // camar = datas['Camar']
+        //     let camar = sensor['Camar']
         //     // individual = datas['Individual/Drone']
-        //     let kurita = sensor['Kurita']
+        //     // let kurita = sensor['Kurita']
 
-        //     plotKurita(kurita)
-        //     // plotCamar(camar)
+        //     // plotKurita(kurita)
+        //     plotCamar(camar)
         //     // plotIndividual(individual)
         //     // plotImsi(imsi)
         //     // plotBoat_tracker(boat_tracker)
         //     // plotBft(bft)
-        //     console.log("tedung", ams_tedung)
+        //     // console.log("tedung", ams_tedung)
         //     plotAms_tedung(ams_tedung)
         //     // console.log("ais", ais)
-        //     plotAis(ais)
+        //     // plotAis(ais)
         // };
 
         // {id: '525011169', key: 'hostility', value: '1', sensor: 'AIS'
 
-        function update_track(list_track) {
-            for (var i=0, l=list_track.length; i < l; i++){
-                let raw = list_track[i];
-                let icon = checkMarkerHostility(raw)
-                if (raw['sensor'] == 'AIS'){
-                    lookupAis[raw['id']].setIcon(icon)
-                }else if(raw['sensor'] == 'AMS'){
-                    lookupAmsTedung[raw['id']].setIcon(icon)
-                }
-            }
-        }
-        
+        // map.on('zoomend', function(e) {
+            
+        //     map.setView([4.234571, 100.611687]);
+        // });
 
-        const lookupAis = {}
-        function plotAis(params){
-            let removeIDs = Object.keys(lookupAis);
+        // map.on('moveend', function(e) {
+        //     map.setView([4.234571, 100.611687]);
+        // });
 
-            for (var i=0, l=params.length; i < l; i++){
-                let infos = params[i];
-                let id = infos['id']
-                let coor = infos['latlong']
-                
-                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupAis))){        // no id
-                    lookupAis[id] = newPointMarkerAIS([coor[0], coor[1]], infos)
-                    layerSites.addLayer(lookupAis[id])
-                    layerSites.addTo(map)
-                    // console.log("pppp")
 
-                }else{
 
-                    let newLatLng = new L.LatLng(coor[1], coor[0]);
-                    lookupAis[id].setLatLng(newLatLng); 
 
-                    // let iconImg = checkhostilityAISandGetMarker(infos['hostility'])
-                    lookupAis[id].setIcon(checkhostilityAISandGetMarker(infos['hostility']))
-                }
-            }
-            removeMarker(removeIDs, lookupAis); 
-        }
-
-        const lookupAmsTedung = {}
-        function plotAms_tedung(params){
-            let removeIDs = Object.keys(lookupAmsTedung);
-
-            for (var i=0, l=params.length; i < l; i++){
-                let infos = params[i];
-                let id = infos['id']
-                let coor = infos['latlong']
-                
-                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupAmsTedung))){        // no id
-                    lookupAmsTedung[id] = newPointMarkerAMS_TEDUNG(infos['latitude'],infos['longitude'], infos)
-                    layerSites.addLayer(lookupAmsTedung[id])
-                    layerSites.addTo(map)
-
-                }else{
-
-                    let prevLatLng = lookupAmsTedung[id].getLatLng();
-                    layerPolyline.addLayer()
-                    if(infos['latitude'] != prevLatLng['lat'] && infos['longitude'] != prevLatLng['lng']){
-
-                        if(id+"polyline" in lookupAmsTedung){
-                            //exist track just update
-
-                            lookupAmsTedung[id+"polyline"].addLatLng(new LatLng(infos['latitude'],infos['longitude'] ))
-                            lookupAmsTedung[id+"polyline_deco"].setPaths(lookupAmsTedung[id+"polyline"])
-
-                        }else{
-                        
-                            // -- if new plot track
-                            let polyArray = [];
-                            polyArray.push([prevLatLng['lat'], prevLatLng[lng]])
-                            polyArray.push([infos['latitude'], infos['longitude']])
-
-                            lookupAmsTedung[id+"polyline"] = new L.polyline(polyArray, {weight: '0'})
-                            layerPolyline.addLayer(lookupAmsTedung[id+"polyline"]);
-
-                            lookupAmsTedung[id+"polyline_deco"] = L.polylineDecorator(polyline, {patterns: [{
-                                            offset: 0,
-                                            repeat: 10,
-                                            symbol: L.Symbol.dash({
-                                                pathOptions: {
-                                                color: '#f00',
-                                                weight: 7
-                                            },
-                                                pixelSize: 0
-                                            })
-                                    }]})
-
-                            layerPolyline.addLayer(lookupAmsTedung[id+"polyline_deco"])
-                            layerPolyline.addTo(map)
-                        }
-                    }
-                    lookupAmsTedung[id].setIcon(checkhostilityTEDUNG_AMSandGetMarker(infos['hostility']))
-                    
-
-                //     const LeafIcon = L.Icon.extend({
-                //     options: {
-                //         shadowUrl: 'leaf-shadow.png',
-                //         iconSize:     [38, 95],
-                //         shadowSize:   [0, 0],
-                //         iconAnchor:   [22, 94],
-                //         shadowAnchor: [4, 62],
-                //         popupAnchor:  [-3, -76]
-                //     }
-                // });
-                // let iconColor_old = new LeafIcon({
-                //         iconUrl: './dist/leaflet/images/marker/tedung_ais/tedung_yellow.png',
-                //         shadowUrl: './dist/leaflet/images/marker-shadow.png'
-                //     })
-
-                    // lookupAmsTedung[id].setIcon(iconColor_old);
-                    
-                    // lookupAmsTedung[id] = newPointMarkerAMS_TEDUNG(infos['latitude'],infos['longitude'], infos)
-                    // layerSites.addLayer(lookupAmsTedung[id])
-                    // layerSites.addTo(map)
-
-                    // let newLatLng = new L.LatLng(coor[1], coor[0]);
-                    // lookupAmsTedung[id].setLatLng(newLatLng); 
-
-                    
-
-                    // lookupAmsTedung[id].setIcon(checkhostilityTEDUNG_AMSandGetMarker(infos['hostility']))
-                }
-            }
-            removeMarker(removeIDs, lookupAmsTedung); 
-        }
-
-        const lookupKurita = {}
-        function plotKurita(params){
-            let removeIDs = Object.keys(lookupKurita);
-
-            for (var i=0, l=params.length; i < l; i++){
-                let infos = params[i];
-                let id = infos['id']
-                let coor = infos['latlong']
-                
-                if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupKurita))){        // no id
-                    lookupKurita[id] = newPointMarkerKurita([coor[0], coor[1]], infos)
-                    layerSites.addLayer(lookupKurita[id])
-                    layerSites.addTo(map)
-
-                }else{
-
-                    let newLatLng = new L.LatLng(coor[1], coor[0]);
-                    lookupKurita[id].setLatLng(newLatLng); 
-
-                    // let iconImg;
-                    // if ("hostility" in infos){
-                    //     iconImg = checkhostilityKuritaSandGetMarker(infos['hostility'])
-                    // }else{
-                    //     iconImg = checkhostilityKuritaSandGetMarker('1')
-                    // }
-                    // console.log(iconImg, "Kurita")
-                    lookupKurita[id].setIcon(checkhostilityKuritaSandGetMarker(infos['hostility']))
-                }
-            }
-            removeMarker(removeIDs, lookupKurita); 
-        }
-
-        function removeMarker(params, lookUp){
-            for (var i=0, l=params.length; i < l; i++){
-                if (isMinuteAgo(lookUp[params[i]]['options']['datetimePlot'])){
-                    map.removeLayer(lookUp[params[i]])
-                }
-            }
-        }
 
 
         // L.marker([51.5, -0.09], {
@@ -414,41 +1028,6 @@
         
 
 
-        // lookupCamar = {}
-        // function plotCamar(params){
-        //     let removeIDs = Object.keys(lookupCamar);
-
-        //     for (var i=0, l=params.length; i < l; i++){
-        //         let infos = params[i];
-        //         id = infos['id']
-
-        //         if(isIDLocateFreeToPlot(infos['id'], Object.keys(lookupCamar))){        // no id
-        //             coor = infos['latlong']
-        //             lookupCamar[id] = L.marker([coor[1], coor[0]], {
-        //                 contextmenu: true,
-        //                 contextmenuWidth: 200,
-        //                 contextmenuItems: [{
-        //                     text: 'Context Menu 1', callback:contextMenu1
-        //                 },{
-        //                     text: 'Context Menu 2', callback:contextMenu2
-        //                 },{
-        //                     text: 'Context Menu 3', callback:contextMenu3
-        //                 }]
-        //             })
-        //             .bindPopup('ID: '+ id)
-
-        //             var layerSites = L.layerGroup();
-        //             layerSites.addLayer(lookupCamar[id])
-        //             layerSites.addTo(map)
-        //         }else{
-                    
-        //             let index = removeIDs.indexOf(i);
-        //             removeIDs.splice(index, 1)
-        //         }
-        //     }
-            
-        //     removeMarker(removeIDs); 
-        // }
 
         // lookupIndividual = {}
         // function plotIndividual(params){
@@ -611,6 +1190,8 @@
             
         //     removeMarker(removeIDs); 
         // }
+
+   
     
     </script>
 </body>
