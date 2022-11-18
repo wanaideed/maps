@@ -42,52 +42,57 @@ export const newPointMarkerAIS = (coor, infos) => {
         contextmenuItems: [{
             text: 'Friendly', callback:function() {
                 set_hostility(infos['id'], "2", infos['sensor'])
-            },index: 0,
+            },
         },{
             text: 'Assumed Friendly', callback:function() {
                 set_hostility(infos['id'], "2", infos['sensor'])
-            },index: 1,
+            },
         },{
             text: 'Neutral', callback:function() {
                 set_hostility(infos['id'], "3", infos['sensor'])
-            },index: 2,
+            },
         },{
             text: 'Hostile', callback:function() {
                 set_hostility(infos['id'], "4", infos['sensor'])
-            },index: 3,
+            },
         },{
             text: 'Assumed Enemy', callback:function() {
                 set_hostility(infos['id'], "4", infos['sensor'])
-            },index: 4,
+            },
         },{
             text: 'Pretender', callback:function() {
                 set_hostility(infos['id'], "5", infos['sensor'])
-            },index: 5,
+            },
         },{
             text: 'Unknown', callback:function() {
                 set_hostility(infos['id'], "6", infos['sensor']);
-            },index: 6,
+            },
         },{
             text: 'Null',  callback:function() {
                 set_hostility(infos['id'], "1", infos['sensor']);
-            },index: 7,
+            },
         },{
             separator: true,
-            index: 8,
+            
         },{
             text: 'EOTS Focus',  callback:function() {
                 console.log("Track")
-            },index: 9,
+            },
         },{
            
-            text: 'Show Trail',  callback:function(e) {
+            text: 'Show/Hide Trail',  callback:function(e) {
                 boolFlag = !boolFlag
                 showTails(infos['id'], boolFlag)
-            },index: 10,
+            },
         }]
     })
     .bindPopup('ID: ' + infos['id'] + " AIS")
 }
+
+// function onClickOo(e){
+//     // e.isVisible()
+//     // console.log("##",e)
+// }
 
 export const addlabelMarkerAIS = ( infos) => {
      return L.tooltip({
@@ -149,7 +154,7 @@ export const newPointMarkerAMS_TEDUNG = (lat, long, infos) => {
                 console.log("Track")
             }
         },{
-            text: 'Show Trail',  callback:function(e) {
+            text: 'Show/Hide Trail',  callback:function(e) {
                 boolFlag = !boolFlag
                 showTailsAMS(infos['id'], boolFlag)
             }

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="./css/leaflet.contextmenu.css" >
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/> -->
     <link rel="stylesheet" href="./css/leaflet.draw.css" >
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
 
     <script src="./dist/leaflet/leaflet.js"></script>
     
@@ -66,6 +67,15 @@
                 font-size: xx-small;
             }
 
+            .leaflet-tooltip.context-menu{
+                background-color: transparent;
+                color: white;
+                /* border: transparent; */
+                box-shadow: none;
+                padding: 0px 3px 0px 3px;
+                font-size: xx-small;
+            }
+
             /* .leaflet-contextmenu { */
                 /* background-color: black;
                 color: white; */
@@ -78,10 +88,38 @@
 </head>
 
 <body>
+    <div><button onclick="radarLayer('0.02')">0.2 nm</button>
+        <button onclick="radarLayer('0.05')">0.5 nm</button>
+        <button onclick="radarLayer('0.1')">1 nm</button>
+        <button onclick="radarLayer('0.2')">2 nm</button>
+        <button onclick="radarLayer('0.5')">5 nm</button>
+        <button onclick="radarLayer('1')">10 nm</button>
+        <button onclick="radarLayer('2')">20 nm</button>
+        <button onclick="radarLayer('5')">50 nm</button>
+        <button onclick="radarLayer('10')">100 nm</button>
+        <button onclick="radarLayer('20')">200 nm</button>
+        <button onclick="radarLayer('50')">500 nm</button>
+    </div>
+    <div><button onclick="aisLayer()">Ais Data</button>
+        <button onclick="aisLayerLabel()">Ais Label</button>
+        <button onclick="tedungLayer()">AMS Data</button>
+        <button onclick="tedungLayerLabel()">AMS Label</button>
+        <button onclick="camarLayer()">CAMAR</button>
+        <button onclick="bearingScaleLayer()">Bearing</button>
+        <button onclick="scanningLayer()">Radar Scanning</button>
+        <button onclick="radarRangeDisable()">Radar Range Remove</button>
+        <!-- <button onclick="radarLayer('2')">20 nm</button>
+        <button onclick="radarLayer('5')">50 nm</button>
+        <button onclick="radarLayer('10')">100 nm</button>
+        <button onclick="radarLayer('20')">200 nm</button>
+        <button onclick="radarLayer('50')">500 nm</button> -->
+    </div>
     <div id="map" class="leaflet-container leaflet-touch leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0"></div>
     <!-- <div><button onclick="radarLayer()">xxxxx</button><button onclick="aisLayer(false)">vvvvvv</button></div> -->
     <script>
-        function radarLayer(){radarLayerToggleO()}
+        function radarRangeDisable(){radarRangeDisableToggle0()}
+
+        function scanningLayer(){scanningLayerToggleO()}
 
         function bearingScaleLayer(){bearingScaleToggleO()}
 
@@ -90,10 +128,14 @@
         function camarLayer(){camarLayerToggleO()}
 
         function tedungLayer(){tedungLayerToggleO()}
+        function tedungLayerLabel(){tedungLayerToggleLabelO()}
 
         function aisLayer(){aisLayerToggleO()}
+        function aisLayerLabel(){aisLayerToggleLabelO()}
 
         function kuritaLayer(){kuritaLayerToggleO()}
+
+        function radarLayer(keyName){createRange(keyName)}
 
 
     </script>
@@ -107,23 +149,39 @@
       
         // load maps
         var center = [4.234571, 100.611687], radarbeam = {"type":"LineString", "coordinates": [[center[1], center[0]], [center[1], center[0]]]};
+
+        const map = L.map('map',
+            { 
+                zoomDelta: 1,
+                zoomSnap: 0.5 ,
+                zoomControl: true, 
+                contextmenu: true, 
+                scrollWheelZoom: false, 
+                doubleClickZoom: false,
+                dragging: false,
+                maxZoom: 18,minZoom:6, //11
+                // layers: [tiles]
+            }).setView([4.2345254, 100.611677], 12); 
         
         let radarLayer = L.layerGroup();
         let bearingScaleLayer = L.layerGroup();
         let rangeRingLayer = L.layerGroup();
         let camarLayer = L.layerGroup();
+
         let tedungLayer = L.layerGroup();
         let tedungLayerTracker = L.layerGroup();
         let tedungLayerLabel = L.layerGroup();
-        let aisLayer = L.layerGroup();
+
+        let aisLayerLabel = L.layerGroup();
         let aisLayerMain = L.layerGroup();
         let aisLayerTracker = L.layerGroup();
+
         let kuritaLayer = L.layerGroup();
         
         // --------------- Setting Click event from puty python --------
         
-        let showradarLayer, showbearingScaleLayer, showrangeRingLayer, showcamarLayer, showtedungLayer, showaisLayer, showkuritaLayer = false;
-        function radarLayerToggle(){
+        let showradarLayer, showbearingScaleLayer, showrangeRingLayer, showcamarLayer, showtedungLayer,showtedungLayerLabel, showaisLayer, showaisLayerLabel, showkuritaLayer = false;
+        function scanningLayerToggle(){
             showradarLayer = !showradarLayer
             if (showradarLayer){ radarLayer.addTo(map) }else{ map.removeLayer(radarLayer) }
             
@@ -153,18 +211,28 @@
             
         }
 
+        function tedungLayerLabelToggle(){
+            showtedungLayerLabel = !showtedungLayerLabel
+            if (showtedungLayerLabel){ tedungLayerLabel.addTo(map) }else{ map.removeLayer(tedungLayerLabel) }
+        }
+
         function aisLayerToggle(){
             showaisLayer = !showaisLayer
             if (showaisLayer){ 
-                aisLayer.addTo(map) 
                 aisLayerMain.addTo(map)
-                aisLayerTracker.addTo(map)
             }else{ 
-                map.removeLayer(aisLayer) 
                 map.removeLayer(aisLayerMain)
-                map.removeLayer(aisLayerTracker)
             }
             
+        }
+
+        function aisLayerLabelToggle(){
+            showaisLayerLabel = !showaisLayerLabel
+            if (showaisLayerLabel){ 
+                aisLayerLabel.addTo(map)
+            }else{ 
+                map.removeLayer(aisLayerLabel)
+            }
         }
 
         function kuritaLayerToggle(){
@@ -173,15 +241,24 @@
             
         }
 
-        window.radarLayerToggleO = radarLayerToggle
+        function radarRangeDisableToggle() {
+            map.removeLayer(rangeRingLayer);
+        }
+
+        window.scanningLayerToggleO = scanningLayerToggle
         window.bearingScaleToggleO = bearingScaleToggle
         window.rangeRingToggleO = rangeRingToggle
         window.camarLayerToggleO = camarLayerToggle
         window.tedungLayerToggleO = tedungLayerToggle
+        window.tedungLayerToggleLabelO = tedungLayerLabelToggle
         window.aisLayerToggleO = aisLayerToggle
+        window.aisLayerToggleLabelO = aisLayerLabelToggle
         window.kuritaLayerToggleO = kuritaLayerToggle
+        window.radarRangeDisableToggle0 = radarRangeDisableToggle
         window.showTails = function (id, flagBool){
-            console.log(flagBool)
+            // console.log(map.contextmenu())
+            // lookupAis[id].relatedTarget
+            //  map.contextmenu.hide()
             if(flagBool){
                 console.log(lookupAis[id+"array"], "Value Array")
                 lookupAis[id+"polyline"] = new L.polyline(lookupAis[id+'array'], {weight: '0.75'})
@@ -208,8 +285,9 @@
             }
         }
 
+       
         window.showTailsAMS = function (id, flagBool){
-            console.log(flagBool, "AMS")
+            // console.log(flagBool, "AMS")
             if(flagBool){
                 console.log(lookupAmsTedung[id+"array"], "Value Array")
                 lookupAmsTedung[id+"polyline"] = new L.polyline(lookupAmsTedung[id+'array'], {weight: '0.75'})
@@ -240,41 +318,35 @@
 
         const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        })
+        }).addTo(map)
 
         const mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
-        const serverIP = "http://192.168.5.192:8081/"
+        const serverIP = "http://localhost:8081/"
         const satelit = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr})
         const empty = L.tileLayer();
-        const map = L.map('map',
-            { 
-                zoomControl: true, 
-                contextmenu: true, 
-                scrollWheelZoom: false, 
-                dragging: false,
-                maxZoom: 18,minZoom:7, //11
-                layers: [tiles, camarLayer]
-            }).setView([4.2345254, 100.611677], 12); 
+      
         
-        const baseLayers = {
-            'OpenStreetMap': tiles,
-            'Satellite': satelit,
-            'Empty Maps': empty
-        };
+        // const baseLayers = {
+        //     'OpenStreetMap': tiles,
+        //     'Satellite': satelit,
+        //     'Empty Maps': empty
+        // };
 
-        const overlays = {
-            'Range Ring': rangeRingLayer,
-            'Bearing Scale': bearingScaleLayer,
-            'Scannig': radarLayer,
-            'Ais Data': aisLayerMain,
-            'Ais Label': aisLayer,
-            'Camar': camarLayer,
-            'AMS/Tedung': tedungLayer,
-            'AMS Label': tedungLayerLabel,
-            'Kurita': kuritaLayer,
-        };
+        // const overlays = {
+        //     'Range Ring': rangeRingLayer,
+        //     'Bearing Scale': bearingScaleLayer,
+        //     'Scannig': radarLayer,
+        //     // 'Ais Data': aisLayerMain,
+        //     // 'Ais Label': aisLayerLabel,
+        //     'Camar': camarLayer,
+        //     // 'AMS/Tedung': tedungLayer,
+        //     // 'AMS Label': tedungLayerLabel,
+        //     'Kurita': kuritaLayer,
+        // };
 
-        L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map)
+        // L.control.layers(baseLayers, overlays, {collapsed: false}).addTo(map)
+        // L.control.layers({'OpenStreetMap': tiles},{collapsed: false}).addTo(map)
+        L.control.layers({'OpenStreetMap': tiles, 'Satellite': satelit, 'Empty Maps': empty}, {}, {collapsed: false}).addTo(map)
 
         // -----------  Bearing Scale Layer ----------------
         let angleTick = [];
@@ -320,22 +392,56 @@
         };
         
         map.on('zoomstart', function(e) {
-            myZoom.start = map.getZoom();
+            // console.log("ZOOMSTART", e);
+            console.log( map.getZoom())
+            console.log(round(map.getZoom()))
+            myZoom.start = round(map.getZoom());
         });
+
+        // map.on('zoom', function() {
+
+        //     console.log(map.getZoom())
+
+        // });
 
         map.on('zoomend', function(e) {
             angleTick.forEach(function(e){bearingScaleLayer.removeLayer(e)})
-
-            myZoom.end = map.getZoom();
-            var diff = myZoom.start - myZoom.end;
+            console.log( round(map.getZoom()), 'zoomed')
             let newRadius;
+            myZoom.end = round(map.getZoom());
+            // radius = {"18": "234.375", "17": "468.75", "16": "937.5", "15": "1875","14": "3750", "13": "7500", "12": "15000", "11": "30000", "10": "60000","9": "120000","8": "240000","7": "480000"}
+            // let newRadius = radius[map.getZoom().toString()];
+            // console.log(newRadius)
+            
+            
+            var diff = myZoom.start - myZoom.end;
+            console.log(diff, "diff")
+            console.log("circlebearing", circleBearing.getRadius())
+            
             if (diff > 0) {
                 newRadius = circleBearing.getRadius() * 2
+                console.log("##")
             } else if (diff < 0) {
                 newRadius = circleBearing.getRadius() / 2
+                console.log("@@@@@")
+            }else{
+                newRadius = circleBearing.getRadius() 
             }
-
-            circleBearing.setRadius(newRadius);
+            // console.log(map.options.crs.unproject(L.point([
+            //                 xy1.x + Math.sin(100 * Math.PI / 180) * newRadius,
+            //                 xy1.y + Math.cos(100 * Math.PI / 180) * newRadius
+            //             ])))
+            let vradius = {"18": "234.375", "17": "468.75", "16": "937.5", "15": "1875","14": "3750", "13": "1000", "12": "20000", "11": "40000", "10": "60000","9": "120000","8": "240000","7": "480000", "6":"960000"}
+            let vnewRadius = vradius[round(map.getZoom()).toString()];
+            console.log(map.getZoom())
+            console.log(round(map.getZoom()));
+            console.log(Math.floor(vnewRadius), "Radius Dict")
+                console.log(newRadius, "Radius")
+                // circleBearing.setLatLng()
+                // circleBearing.setLatLng(center)
+                newRadius = vnewRadius
+            circleBearing.setRadius(Math.floor(vnewRadius));
+            let xy1 = map.options.crs.project(L.latLng(center));
             [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180,190,200, 210, 220, 230, 240,250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360].forEach(function(angle) {
                 let ply;
                 if(angle == 90 || angle == 360 || angle==180 || angle==270 ){
@@ -369,33 +475,55 @@
                 });
         });
 
-
         // ----------- Range Ring Layer -------------------
-        let i = 2;
-        var rangeRing = [];
-            [3704, 7408, 11112, 14816, 18520, 22224,25928, 29632, 33336, 37040].forEach(function(r) {
-                // rings.push(
-                    L.circle(
-                        center, {
-                            radius: r,
-                            fill: false,
-                            weight: 1.5,
-                            color: '#808080'
-                        }
-                    ).addTo(rangeRingLayer)
-                    let point  = L.point(xy1).add([0, r])
-                    L.tooltip({
-                        permanent: true,
-                        direction: 'center',
-                        className: "my-labels"
-                    })
-                    .setContent(i + "nm")
-                    .setLatLng(map.options.crs.unproject(point))
-                    .addTo(rangeRingLayer)
+        let lvlRange = {
+            "0.02" : [37.04, 74.08, 111.12, 148.16, 185.2, 222.24, 259.28, 296.32, 333.36, 370.4],
+            "0.05" :[92.6, 185.2, 277.8, 370.4, 463, 555.6, 648.2, 740.8, 833.4, 926],
+            "0.1" :[185.2, 370.4, 555.6, 740.8, 926, 1111.2, 1296.4, 1481.6, 1666.8, 1852],
+            "0.2" :[370.4, 740.8, 1111.2, 1481.6, 1852, 2222.4, 2592.8, 2963.2, 3333.6, 3704],
+            "0.5" :[926, 1852, 2778, 3704, 4630, 5556, 6482, 7408, 8334, 9260],
+            "1" :[1852, 3704, 5556, 7408, 9260, 11112, 12964, 14816, 16668, 18520],
+            "2" :[3704, 7408, 11112, 14816, 18520, 22224, 25928, 29632, 33336, 37040],
+            "5" :[9260, 18520, 27780, 37040, 46300, 55560, 64820, 74080, 83340, 92600],
+            "10" :[18520, 37040, 55560, 74080, 92600, 111120, 129640, 148160, 166680, 185200],
+            "20" :[37040, 74080, 111120, 148160, 185200, 222240, 259280, 296320, 333360, 370400],
+            "50" :[92600, 185200, 277800, 370400, 463000, 555600, 648200, 740800, 833400, 926000]
+        }
+        
+        window.createRange = function (keyRange){
+            // map.removeLayer(rangeRingLayer)
+            rangeRingLayer.clearLayers()
+            
+            const panZoom = {"0.02": "17", "0.05": "16", "0.1": "15", "0.2": "14", "0.5": "12.5", "1": "11.5", "2": "10.5", "5": "9", "10": "8","20": "7","50": "6",}
+            map.setView(center,panZoom[keyRange])
+            // map.setZoom(panZoom[keyRange])
+            let i = 0, count = 1;
+            lvlRange[keyRange].forEach(function(r){
+                i = parseFloat(keyRange) * count
+                L.circle(
+                    center, {
+                        radius: r,
+                        fill: false,
+                        weight: 1.5,
+                        color: '#808080'
+                    }
+                ).addTo(rangeRingLayer)
+                let point  = L.point(xy1).add([0, r])
+                L.tooltip({
+                    permanent: true,
+                    direction: 'center',
+                    className: "my-labels"
+                })
+                .setContent( parseFloat(i).toFixed(2) + " nm")
+                .setLatLng(map.options.crs.unproject(point))
+                .addTo(rangeRingLayer)
+                count = count + 1
+            })
 
-                    i = i + 2
-            });
-            // rangeRingLayer.addTo(map)
+            rangeRingLayer.addTo(map)
+        }
+       
+        
 
 
         // ------------ Radar rotation layer --------------
@@ -421,10 +549,6 @@
             left = L.point(xy1).subtract([radius, 0]),
             tops = L.point(xy1).add([0, radius]),
             bottom = L.point(xy1).subtract([0, radius]);
-
-        // console.log(right, "right")
-        // console.log(map.options.crs.unproject(right))
-        // console.log(map.options.crs.unproject(left))
         
 
         var crosshairs = [
@@ -569,7 +693,7 @@
                     polyArray.push([infos['latitude'],infos['longitude']])
                     lookupAis[id+'array'] = polyArray
 
-                    aisLayer.addLayer(lookupAis[id+"label"])
+                    aisLayerLabel.addLayer(lookupAis[id+"label"])
                     aisLayerMain.addLayer(lookupAis[id])
                   
 
@@ -598,9 +722,8 @@
             }
             // removeMarker(removeIDs, lookupAis); 
         }
-        aisLayer.addTo(map)
-        aisLayerMain.addTo(map)
-
+        // aisLayer.addTo(map)
+        // aisLayerMain.addTo(map)
 
         // ------------- Function Tedung / AMS plot ----------
         const lookupAmsTedung = {}
@@ -670,8 +793,8 @@
             }
             // removeMarker(removeIDs, lookupAmsTedung); 
         }
-        tedungLayer.addTo(map)
-        tedungLayerLabel.addTo(map)
+        // tedungLayer.addTo(map)
+        // tedungLayerLabel.addTo(map)
 
         //-------------- Function Kurita plot ------------
         const lookupKurita = {}
@@ -701,9 +824,9 @@
        //--------------- Function Camar plot -------------
 
        let lookupCamar = {}
-        let contextMane = [{
-                text: 'Hostility 1', callback: clickContext
-            }]
+        // let contextMane = [{
+        //         text: 'Hostility 1', callback: clickContext
+        //     }]
         function plotCamar(params){
             let removeIDs = Object.keys(lookupCamar);
             camarLayer.clearLayers()
@@ -721,20 +844,26 @@
                     fillColor:'#2b18d6',
                     fillOpacity: 1,
                     radius: 25,  
-                    contextmenu: true,
-                    contextmenuWidth: 200,
-                    contextmenuItems: contextMane }).bindPopup('ID: ' + infos['id'] + " CAMAR")
-                    camarLayer.addLayer(camar)
+                    // contextmenu: true,
+                    // contextmenuWidth: 200,
+                    // contextmenuItems: contextMane 
+                }).bindPopup('ID: ' + infos['id'] + " CAMAR")
+                camarLayer.addLayer(camar)
 
             }
             
             removeMarker(removeIDs, lookupCamar); 
         }
+
+        function round(value, precision) {
+            var multiplier = Math.pow(10, precision || 0);
+            return Math.round(value * multiplier) / multiplier;
+        }
         // camarLayer.addTo(map)
 
-        function clickContext() {
-            console.log("Click")
-        }
+        // function clickContext() {
+        //     console.log("Click")
+        // }
         
         //         let aisss = [{
         // "id" :"123123",
@@ -747,6 +876,76 @@
         
         // }]
         // plotAis(aisss)
+
+        // let ams = [{
+        // "id" :"123123",
+        // "heading": "80",
+        // "sensor": "AMS",
+        // "hostility": "1",
+        // "latitude": 4.203522,
+        // "longitude": 100.567068,
+        //     "latlong": [4.203522,100.567068]
+        
+        // }]
+        // plotAms_tedung(ams)
+
+        // plotCamar(ams)
+
+    //    console.log(map.contextmenu, "****")
+   
+
+    //    map.on('contextmenu.select', (e)=>{
+    //     console.log(e.contextmenu)
+    //         // e.contextmenu.setDisabled(10)
+    //         // e.contextmenu.removeItem(0)
+    //         // console.log(e.contextmenu.removeItem(e.el), "OOOOOO")
+    //         // console.log(e.el, "OOOOOO")
+    //     });
+
+    //     map.on('contextmenu.show', (e)=>{
+    //         console.log("e.contextmenu")
+    //         console.log(e.removeItem.removeItem(0))
+    //         // e.contextmenu.setDisabled(10)
+    //         // e.contextmenu.removeItem(0)
+    //         // console.log(e.contextmenu.removeItem(e.el), "OOOOOO")
+    //         // console.log(e.el, "OOOOOO")
+    //     });
+
+        // var m1 = L.marker([4.225458,100.558844]).addTo(map).on('contextmenu', onClickOo)
+        // var popup = L.popup().setLatLng([4.242471,100.553965]).setContent('<p>Hello world!<br />This is a nice popup.</p>')
+
+       
+
+//         map.on('contextmenu',function(e){
+//             console.log('plugin run!')
+//         });
+
+//         let vv = '<div class="container">' +
+// '<h2>List Group With Custom Content</h2>' +
+// '<div class="list-group">' +
+//     '<a href="#" class="list-group-item active">' +
+//         '<h4 class="list-group-item-heading">First List Group Item Heading</h4>' +
+//         '<p class="list-group-item-text">List Group Item Text</p>' +
+//         '</a>' +
+//         '<a href="#" class="list-group-item">' +
+//             ' <h4 class="list-group-item-heading">Second List Group Item Heading</h4>' +
+//             ' <p class="list-group-item-text">List Group Item Text</p>' +
+//             '</a> ' +
+//             '<a href="#" class="list-group-item">' +
+//                 ' <h4 class="list-group-item-heading">Third List Group Item Heading</h4>' +
+//                 ' <p class="list-group-item-text">List Group Item Text</p>' +
+//                 '</a>' +
+//                 '</div>' +
+//                 '</div>'
+
+//                 function onClickOo() {
+//             console.log("#")
+//             L.popup([4.225458,100.558844],{ options: {
+//                 className: 'contextMenu',
+//                 autoClose: true,
+//                 closeOnClick: true,
+//             }, content: vv}).openOn(map);
+//         }
 
         // let aissssss = [{
         // "id" :"902932",
