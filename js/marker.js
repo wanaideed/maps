@@ -1,4 +1,4 @@
-import { set_hostility } from './hostility.js';
+import {aots_function, set_hostility} from './hostility.js';
 
 const LeafIcon = L.Icon.extend({
     options: {
@@ -76,7 +76,7 @@ export const newPointMarkerAIS = (coor, infos) => {
             
         },{
             text: 'EOTS Focus',  callback:function() {
-                console.log("Track")
+                aots_function(infos);
             },
         },{
            

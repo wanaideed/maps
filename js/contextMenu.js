@@ -9,7 +9,7 @@ function contextMenu1(idMaker) {
         console.log(this.responseText);
       }
     };
-    http.open("POST", "http://192.168.0.114:8081/sse_event/set_track");
+    http.open("POST", "http://192.168.0.107:8081/sse_event/set_track");
     http.send(fd);
 }
 
@@ -23,7 +23,7 @@ function contextMenu2(idMaker) {
         console.log(this.responseText);
       }
     };
-    http.open("POST", "http://192.168.0.114:8081/sse_event/set_track");
+    http.open("POST", "http://192.168.0.107:8081/sse_event/set_track");
     http.send(fd);
 }
 
@@ -37,7 +37,7 @@ function contextMenu3(idMaker) {
         console.log(this.responseText);
       }
     };
-    http.open("POST", "http://192.168.0.114:8081/sse_event/set_track");
+    http.open("POST", "http://192.168.0.107:8081/sse_event/set_track");
     http.send(fd);
 }
 
