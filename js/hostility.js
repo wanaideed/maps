@@ -12,6 +12,7 @@ export const set_hostility = (idMaker, value, sensorType) => {
             // console.log(this.responseText);
         }
     };
-    http.open("POST", "http://192.168.5.192:8081/sse_event/set_track");
+    // http.open("POST", "http://192.168.5.192:8081/sse_event/set_track");
+    http.open("POST", "http://192.168.0.107:8081/sse_event/set_track");
     http.send(fd);
 }
